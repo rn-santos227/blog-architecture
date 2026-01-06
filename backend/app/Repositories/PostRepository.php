@@ -137,29 +137,36 @@ class PostRepository {
     }
 
     public function search(
-        string $query,
+        ?string $query,
         int $limit = 10,
         int $page = 1,
         ?int $authorId = null,
-        ?string $tag = null,
+        ?array $tags = null,
         ?string $from = null,
         ?string $to = null
     ): Collection {
         $limit = max(1, min($limit, 50));
         $page = max(1, $page);
         $offset = ($page - 1) * $limit;
+        $query = trim((string) $query);
+        $tags = collect($tags ?? [])
+            ->filter()
+            ->map(fn (string $tag) => str($tag)->slug()->toString())
+            ->values()
+            ->all();
 
         $version = Cache::get('posts:search:version', 1);
 
         $cacheKey = sprintf(
-            'posts:search:v%d:%s:%d:%d:%s:%s:%s',
+            'posts:search:v%d:%s:%d:%d:%s:%s:%s:%s',
             $version,
-            md5(mb_strtolower(trim($query))),
+            md5(mb_strtolower($query)),
             $limit,
             $page,
             $authorId ?? 'any',
-            $tag ?? 'any',
-            $from ?? 'any'
+            empty($tags) ? 'any' : implode(',', $tags),
+            $from ?? 'any',
+            $to ?? 'any'
         );
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use (
@@ -167,10 +174,41 @@ class PostRepository {
             $limit,
             $offset,
             $authorId,
-            $tag,
+            $tags,
             $from,
             $to
         ) {
+            if ($query === '') {
+                $posts = Post::query()
+                    ->where('status', 'published')
+                    ->with(['user:id,name', 'tags:id,name,slug']);
+
+                if ($authorId !== null) {
+                    $posts->where('user_id', $authorId);
+                }
+
+                if ($from !== null) {
+                    $posts->where('published_at', '>=', $from);
+                }
+
+                if ($to !== null) {
+                    $posts->where('published_at', '<=', $to);
+                }
+
+                foreach ($tags as $tagSlug) {
+                    $posts->whereHas('tags', function ($query) use ($tagSlug) {
+                        $query->where('tags.slug', $tagSlug);
+                    });
+                }
+
+                return $posts
+                    ->orderByDesc('published_at')
+                    ->orderByDesc('id')
+                    ->offset($offset)
+                    ->limit($limit)
+                    ->get();
+            }
+
             $ids = $this->sphinx->searchPosts(
                 query: $query,
                 limit: $limit,
@@ -189,9 +227,9 @@ class PostRepository {
                 ->where('status', 'published')
                 ->with(['user:id,name', 'tags:id,name,slug']);
 
-            if ($tag !== null) {
-                $posts->whereHas('tags', function ($q) use ($tag) {
-                    $q->where('tags.slug', str($tag)->slug());
+            foreach ($tags as $tagSlug) {
+                $posts->whereHas('tags', function ($query) use ($tagSlug) {
+                    $query->where('tags.slug', $tagSlug);
                 });
             }
 
