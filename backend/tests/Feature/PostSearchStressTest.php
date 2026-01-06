@@ -3,12 +3,12 @@
 namespace Tests\Feature;
 
 use App\Repositories\PostRepository;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class PostSearchStressTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_search_endpoint_handles_repeated_requests(): void {
         $iterations = 25;

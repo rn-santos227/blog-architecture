@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class HealthCheckApi extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_health_check_returns_ok(): void {
         $response = $this->getJson('/api/v1/health');

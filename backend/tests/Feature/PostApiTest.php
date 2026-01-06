@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Post;
 use App\Models\User;
 use App\Repositories\PostRepository;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Sanctum\Sanctum;
 use Mockery;
@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 class PostApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_index_returns_only_published_posts(): void {
         $user = User::factory()->create();
