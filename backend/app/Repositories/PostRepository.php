@@ -4,7 +4,8 @@ namespace App\Repositories;
 
 use App\Models\Post;
 use App\Models\Tag;
-
+use App\Services\Search\SphinxClient;
+use App\Jobs\Search\ReindexPostsJob;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -31,6 +32,7 @@ class PostRepository {
             }
 
             $this->invalidateSearchCache();
+            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
             return $post;
         });
     }
@@ -56,6 +58,7 @@ class PostRepository {
             }
 
             $this->invalidateSearchCache();
+            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
             return $post;
         });
     }
@@ -63,7 +66,7 @@ class PostRepository {
     public function delete(Post $post): void {
         DB::transaction(function () use ($post) {
             $post->delete();
-
+            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
             $this->invalidateSearchCache();
         });
     }
@@ -71,7 +74,7 @@ class PostRepository {
     public function restore(Post $post): void {
         DB::transaction(function () use ($post) {
             $post->restore();
-
+            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
             $this->invalidateSearchCache();
         });
     }
