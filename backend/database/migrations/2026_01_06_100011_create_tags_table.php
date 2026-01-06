@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('name');
         });
@@ -26,6 +27,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tags');
+        Schema::table('tags', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
     }
 };

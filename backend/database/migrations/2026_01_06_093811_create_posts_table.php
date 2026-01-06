@@ -23,10 +23,11 @@ return new class extends Migration
 
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('user_id');
             $table->index(['status', 'published_at']);
-            $table->index('created_at');
+            $table->index('deleted_at');
         });
     }
 
@@ -35,6 +36,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::table('posts', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
     }
 };
