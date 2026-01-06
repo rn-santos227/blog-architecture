@@ -33,6 +33,12 @@ class PostRepository {
                     : null,
             ]);
 
+            \App\Models\PostLookup::create([
+                'post_id' => $post->id,
+                'shard' => $shard,
+                'user_id' => $userId,
+            ]);
+
             if (!empty($data['tags'])) {
                 $post->tags()->sync(
                     $this->resolveTagIds($data['tags'])
@@ -113,7 +119,6 @@ class PostRepository {
 
     public function paginateByUser(int $userId, int $perPage = 15): LengthAwarePaginator {
         $connection = $this->shardRouter->connectionForUser($userId);
-
         return Post::on($connection)
             ->where('user_id', $userId)
             ->latest()
@@ -121,7 +126,14 @@ class PostRepository {
     }
 
     public function findById(int $id): ?Post {
-        return Post::with(['tags', 'user'])->find($id);
+        $connection = $this->shardRouter->connectionForPostId($id);
+        if (!$connection) {
+            return null;
+        }
+
+        return Post::on($connection)
+            ->with(['tags', 'user'])
+            ->find($id);
     }
 
     public function search(string $query, int $limit = 10, int $page = 1): Collection {
