@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class TagService
 {
-    public function listWithPostCounts(int $minPosts = 0, int $limit = 50): Collection
+    public function listWithPostCounts(int $limit = 50): Collection
     {
         return Tag::query()
             ->withCount([
@@ -15,9 +15,7 @@ class TagService
                     $query->where('status', 'published');
                 },
             ])
-            ->when($minPosts > 0, function ($query) use ($minPosts) {
-                $query->having('posts_count', '>=', $minPosts);
-            })
+            ->having('posts_count', '>', 0)
             ->orderByDesc('posts_count')
             ->orderBy('name')
             ->limit($limit)
