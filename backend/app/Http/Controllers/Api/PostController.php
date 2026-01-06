@@ -17,7 +17,7 @@ class PostController extends Controller
         private readonly PostRepository $posts
     ) {}
 
-    public function index(): JsonResponse {
+    public function index(Request $request): JsonResponse {
         $posts = Post::query()
             ->where('status', 'published')
             ->with(['user:id,name', 'tags:id,name,slug'])
