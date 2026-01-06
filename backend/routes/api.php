@@ -14,6 +14,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/health', HealthCheckController::class);
 
     Route::get('/posts', [PostController::class, 'index']);
+    Route::get('/posts/search', [PostController::class, 'search']);
     Route::get('/posts/{post}', [PostController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {

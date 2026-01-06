@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Post\SearchPostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Post;
@@ -25,6 +26,16 @@ class PostController extends Controller
                 perPage: 10,
                 cursor: $request->input('cursor')
             );
+
+        return response()->json($posts);
+    }
+
+    public function search(SearchPostRequest $request): JsonResponse {
+        $posts = $this->posts->search(
+            query: $request->q,
+            limit: (int) $request->limit,
+            page: (int) $request->page,
+        );
 
         return response()->json($posts);
     }
