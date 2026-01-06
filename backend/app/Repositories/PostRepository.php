@@ -11,21 +11,23 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class PostRepository {
-    public function create(array $data, int $userId): Post {
+    public function create(array $data, int $userId): Post
+    {
         return DB::transaction(function () use ($data, $userId) {
             $post = Post::create([
                 'user_id' => $userId,
                 'title' => $data['title'],
                 'body' => $data['body'],
                 'status' => $data['status'] ?? 'draft',
-                'published_at' => $data['status'] === 'published'
+                'published_at' => ($data['status'] ?? 'draft') === 'published'
                     ? now()
                     : null,
             ]);
 
-            if (!empty($data['tags'])) {
-                $tagIds = $this->resolveTagIds($data['tags']);
-                $post->tags()->sync($tagIds);
+            if (! empty($data['tags'])) {
+                $post->tags()->sync(
+                    $this->resolveTagIds($data['tags'])
+                );
             }
 
             $this->invalidateSearchCache();
@@ -40,17 +42,17 @@ class PostRepository {
                 'title' => $data['title'] ?? $post->title,
                 'body' => $data['body'] ?? $post->body,
                 'status' => $data['status'] ?? $post->status,
-                'published_at' => $data['status'] === 'published'
+                'published_at' => ($data['status'] ?? $post->status) === 'published'
                     ? ($post->published_at ?? now())
                     : null,
             ]);
 
             if (array_key_exists('tags', $data)) {
-                $tagIds = empty($data['tags'])
-                    ? []
-                    : $this->resolveTagIds($data['tags']);
-
-                $post->tags()->sync($tagIds);
+                $post->tags()->sync(
+                    empty($data['tags'])
+                        ? []
+                        : $this->resolveTagIds($data['tags'])
+                );
             }
 
             $this->invalidateSearchCache();
@@ -81,11 +83,42 @@ class PostRepository {
     }
 
     public function findById(int $id): ?Post {
-        return Post::with('tags')->find($id);
+        return Post::with(['tags', 'user'])->find($id);
+    }
+
+    public function search(string $query, int $limit = 10, int $page = 1): Collection {
+        $limit  = max(1, min($limit, 50));
+        $page   = max(1, $page);
+        $offset = ($page - 1) * $limit;
+
+        $version = Cache::get('posts:search:version', 1);
+
+        $cacheKey = sprintf(
+            'posts:search:v%d:%s:%d:%d',
+            $version,
+            md5(mb_strtolower(trim($query))),
+            $limit,
+            $page
+        );
+
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($query, $limit, $offset) {
+            $ids = $this->sphinx->searchPosts($query, $limit, $offset);
+
+            if (empty($ids)) {
+                return collect();
+            }
+
+            return Post::query()
+                ->whereIn('id', $ids)
+                ->where('status', 'published')
+                ->with(['user:id,name', 'tags:id,name,slug'])
+                ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
+                ->get();
+        });
     }
 
     private function invalidateSearchCache(): void {
-        Cache::tags(['posts', 'search'])->flush();
+        Cache::increment('posts:search:version');
     }
 
     private function resolveTagIds(array $tags): array {
