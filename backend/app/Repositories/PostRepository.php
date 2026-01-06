@@ -5,17 +5,25 @@ namespace App\Repositories;
 use App\Models\Post;
 use App\Models\Tag;
 use App\Services\Search\SphinxClient;
-use App\Jobs\Search\ReindexPostsJob;
+use App\Services\Sharding\PostShardRouter;
+use App\Jobs\Search\ReindexPostsShardJob;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class PostRepository {
-    public function create(array $data, int $userId): Post
-    {
-        return DB::transaction(function () use ($data, $userId) {
-            $post = Post::create([
+    public function __construct(
+        private readonly SphinxClient $sphinx,
+        private readonly PostShardRouter $shardRouter
+    ) {}
+
+    public function create(array $data, int $userId): Post {
+        $connection = $this->shardRouter->connectionForUser($userId);
+        $indexName = $this->shardRouter->indexForUser($userId);
+
+        return DB::connection($connection)->transaction(function () use ($data, $userId, $indexName) {
+            $post = Post::on(DB::getDefaultConnection())->create([
                 'user_id' => $userId,
                 'title' => $data['title'],
                 'body' => $data['body'],
@@ -25,21 +33,28 @@ class PostRepository {
                     : null,
             ]);
 
-            if (! empty($data['tags'])) {
+            if (!empty($data['tags'])) {
                 $post->tags()->sync(
                     $this->resolveTagIds($data['tags'])
                 );
             }
 
             $this->invalidateSearchCache();
-            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
+
+            ReindexPostsShardJob::dispatch($indexName)
+                ->delay(now()->addSeconds(5));
+
             return $post;
         });
     }
 
-    public function update(Post $post, array $data): Post
-    {
-        return DB::transaction(function () use ($post, $data) {
+
+    public function update(Post $post, array $data): Post {
+        $userId = $post->user_id;
+        $connection = $this->shardRouter->connectionForUser($userId);
+        $indexName = $this->shardRouter->indexForUser($userId);
+
+        return DB::connection($connection)->transaction(function () use ($post, $data, $indexName) {
             $post->update([
                 'title' => $data['title'] ?? $post->title,
                 'body' => $data['body'] ?? $post->body,
@@ -58,29 +73,49 @@ class PostRepository {
             }
 
             $this->invalidateSearchCache();
-            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
+
+            ReindexPostsShardJob::dispatch($indexName)
+                ->delay(now()->addSeconds(5));
+
             return $post;
         });
     }
 
     public function delete(Post $post): void {
-        DB::transaction(function () use ($post) {
+        $userId = $post->user_id;
+        $connection = $this->shardRouter->connectionForUser($userId);
+        $indexName = $this->shardRouter->indexForUser($userId);
+
+        DB::connection($connection)->transaction(function () use ($post, $indexName) {
             $post->delete();
-            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
+
             $this->invalidateSearchCache();
+
+            ReindexPostsShardJob::dispatch($indexName)
+                ->delay(now()->addSeconds(5));
         });
     }
 
     public function restore(Post $post): void {
-        DB::transaction(function () use ($post) {
+        $userId = $post->user_id;
+        $connection = $this->shardRouter->connectionForUser($userId);
+        $indexName = $this->shardRouter->indexForUser($userId);
+
+        DB::connection($connection)->transaction(function () use ($post, $indexName) {
             $post->restore();
-            ReindexPostsJob::dispatch()->delay(now()->addSeconds(5));
+
             $this->invalidateSearchCache();
+
+            ReindexPostsShardJob::dispatch($indexName)
+                ->delay(now()->addSeconds(5));
         });
     }
 
     public function paginateByUser(int $userId, int $perPage = 15): LengthAwarePaginator {
-        return Post::where('user_id', $userId)
+        $connection = $this->shardRouter->connectionForUser($userId);
+
+        return Post::on($connection)
+            ->where('user_id', $userId)
             ->latest()
             ->paginate($perPage);
     }
@@ -90,8 +125,8 @@ class PostRepository {
     }
 
     public function search(string $query, int $limit = 10, int $page = 1): Collection {
-        $limit  = max(1, min($limit, 50));
-        $page   = max(1, $page);
+        $limit = max(1, min($limit, 50));
+        $page = max(1, $page);
         $offset = ($page - 1) * $limit;
 
         $version = Cache::get('posts:search:version', 1);

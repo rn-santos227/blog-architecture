@@ -113,6 +113,33 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'mysql_shard_0' => [
+            'driver' => 'mysql',
+            'host' => env('DB_SHARD0_HOST', '127.0.0.1'),
+            'port' => env('DB_SHARD0_PORT', '3306'),
+            'database' => env('DB_SHARD0_DATABASE', 'db_blog_shard0'),
+            'username' => env('DB_SHARD0_USERNAME', 'db_blog'),
+            'password' => env('DB_SHARD0_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
+
+        'mysql_shard_1' => [
+            'driver' => 'mysql',
+            'host' => env('DB_SHARD1_HOST', '127.0.0.1'),
+            'port' => env('DB_SHARD1_PORT', '3306'),
+            'database' => env('DB_SHARD1_DATABASE', 'db_blog_shard1'),
+            'username' => env('DB_SHARD1_USERNAME', 'db_blog'),
+            'password' => env('DB_SHARD1_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
     ],
 
     /*
