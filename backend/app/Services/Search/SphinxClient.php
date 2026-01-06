@@ -16,15 +16,36 @@ class SphinxClient {
         ]);
     }
 
-    public function searchPosts(string $query, int $limit, int $offset = 0): array {
-        $rows = SphinxQL::create($this->connection)
+    public function searchPosts(
+        string $query,
+        int $limit,
+        int $offset = 0,
+        ?int $authorId = null,
+        ?int $fromTs = null,
+        ?int $toTs = null
+    ): array {
+        $sphinx = SphinxQL::create($this->connection)
             ->select('id')
-            ->from('posts_idx')
+            ->from('posts_idx_shard_0, posts_idx_shard_1')
             ->where('is_published', '=', 1)
             ->match(['title', 'body'], $query)
-            ->limit($limit, $offset)
-            ->execute();
+            ->limit($limit, $offset);
 
-        return array_map(fn ($row) => (int) $row['id'], $rows);
+        if ($authorId !== null) {
+            $sphinx->where('user_id', '=', $authorId);
+        }
+
+        if ($fromTs !== null) {
+            $sphinx->where('published_at_ts', '>=', $fromTs);
+        }
+
+        if ($toTs !== null) {
+            $sphinx->where('published_at_ts', '<=', $toTs);
+        }
+
+        return array_map(
+            fn ($row) => (int) $row['id'],
+            $sphinx->execute()
+        );
     }
 }

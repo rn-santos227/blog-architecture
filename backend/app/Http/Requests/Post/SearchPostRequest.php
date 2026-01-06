@@ -22,9 +22,15 @@ class SearchPostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q'     => ['required', 'string', 'min:2'],
-            'page'  => ['nullable', 'integer', 'min:1'],
+            'q' => ['required', 'string', 'min:2'],
+
+            'page' => ['nullable', 'integer', 'min:1'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+
+            'author_id' => ['nullable', 'integer', 'exists:users,id'],
+            'tag' => ['nullable', 'string', 'min:2'],
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date', 'after_or_equal:from'],
         ];
     }
 

@@ -136,7 +136,15 @@ class PostRepository {
             ->find($id);
     }
 
-    public function search(string $query, int $limit = 10, int $page = 1): Collection {
+    public function search(
+        string $query,
+        int $limit = 10,
+        int $page = 1,
+        ?int $authorId = null,
+        ?string $tag = null,
+        ?string $from = null,
+        ?string $to = null
+    ): Collection {
         $limit = max(1, min($limit, 50));
         $page = max(1, $page);
         $offset = ($page - 1) * $limit;
@@ -144,24 +152,50 @@ class PostRepository {
         $version = Cache::get('posts:search:version', 1);
 
         $cacheKey = sprintf(
-            'posts:search:v%d:%s:%d:%d',
+            'posts:search:v%d:%s:%d:%d:%s:%s:%s',
             $version,
             md5(mb_strtolower(trim($query))),
             $limit,
-            $page
+            $page,
+            $authorId ?? 'any',
+            $tag ?? 'any',
+            $from ?? 'any'
         );
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($query, $limit, $offset) {
-            $ids = $this->sphinx->searchPosts($query, $limit, $offset);
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use (
+            $query,
+            $limit,
+            $offset,
+            $authorId,
+            $tag,
+            $from,
+            $to
+        ) {
+            $ids = $this->sphinx->searchPosts(
+                query: $query,
+                limit: $limit,
+                offset: $offset,
+                authorId: $authorId,
+                fromTs: $from ? strtotime($from) : null,
+                toTs: $to ? strtotime($to) : null
+            );
 
             if (empty($ids)) {
                 return collect();
             }
 
-            return Post::query()
+            $posts = Post::query()
                 ->whereIn('id', $ids)
                 ->where('status', 'published')
-                ->with(['user:id,name', 'tags:id,name,slug'])
+                ->with(['user:id,name', 'tags:id,name,slug']);
+
+            if ($tag !== null) {
+                $posts->whereHas('tags', function ($q) use ($tag) {
+                    $q->where('tags.slug', str($tag)->slug());
+                });
+            }
+
+            return $posts
                 ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
                 ->get();
         });
