@@ -16,6 +16,8 @@ class PostFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    protected $model = Post::class;
+
     public function definition(): array
     {
         $isPublished = $this->faker->boolean(80);
