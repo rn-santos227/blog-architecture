@@ -10,8 +10,12 @@
     </section>
 
     <section class="mt-8">
-      <div v-if="isLoading" class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500">
-        Loading published posts...
+      <div
+        v-if="isLoading"
+        class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500"
+      >
+        <UiSpinner size="lg" label="Loading published posts" />
+        <span>Loading published posts...</span>
       </div>
       <div v-else-if="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
         {{ errorMessage }}
@@ -25,8 +29,9 @@
           <BlogCard v-for="post in posts" :key="post.id" :post="post" />
         </div>
         <div class="flex flex-col items-center gap-2 text-sm text-slate-500">
-          <div v-if="isLoadingMore" class="rounded-full border border-slate-200 px-4 py-2">
-            Loading more posts...
+          <div v-if="isLoadingMore" class="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2">
+            <UiSpinner size="sm" label="Loading more posts" />
+            <span>Loading more posts...</span>
           </div>
           <div v-else-if="hasMore" ref="loadMoreTrigger" class="h-10 w-full"></div>
           <div v-else class="text-slate-400">You've reached the end.</div>
@@ -40,6 +45,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import AdvanceBlogSearch from '@/components/blog/AdvanceBlogSearch.vue';
 import BlogCard from '@/components/blog/BlogCard.vue';
+import UiSpinner from '@/components/ui/UiSpinner.vue';
 import { useBlogStore } from '@/stores/blog';
 
 const blogStore = useBlogStore();

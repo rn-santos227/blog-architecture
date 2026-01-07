@@ -1,7 +1,11 @@
 <template>
   <main class="mx-auto w-full max-w-4xl px-6 py-10">
-    <div v-if="isLoading" class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500">
-      Loading post...
+    <div
+      v-if="isLoading"
+      class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500"
+    >
+      <UiSpinner size="lg" label="Loading post" />
+      <span>Loading post...</span>
     </div>
     <div v-else-if="errorMessage" class="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
       {{ errorMessage }}
@@ -33,6 +37,7 @@
 import { computed, onMounted, watch } from 'vue';
 import { useRoute, RouterLink } from 'vue-router';
 import UiChip from '@/components/ui/UiChip.vue';
+import UiSpinner from '@/components/ui/UiSpinner.vue';
 import { useBlogStore } from '@/stores/blog';
 
 const route = useRoute();

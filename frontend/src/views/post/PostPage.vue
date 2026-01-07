@@ -14,9 +14,10 @@
 
     <div
       v-if="isLoading"
-      class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500"
+      class="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500"
     >
-      Loading your posts...
+      <UiSpinner size="lg" label="Loading your posts" />
+      <span>Loading your posts...</span>
     </div>
 
     <div
@@ -115,6 +116,7 @@ import { computed, onMounted, ref } from 'vue'
 import UiChip from '@/components/ui/UiChip.vue'
 import UiDataTable from '@/components/ui/UiDataTable.vue'
 import UiButton from '@/components/ui/UiButton.vue'
+import UiSpinner from '@/components/ui/UiSpinner.vue'
 import PostCreateComponent from '@/components/post/PostCreateComponent.vue'
 import PostUpdateComponent from '@/components/post/PostUpdateComponent.vue'
 import PostDeleteModal from '@/components/post/PostDeleteComponent.vue'
