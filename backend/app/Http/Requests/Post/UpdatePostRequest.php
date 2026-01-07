@@ -26,7 +26,7 @@ class UpdatePostRequest extends FormRequest
             'body' => ['sometimes', 'string'],
             'status' => ['sometimes', 'in:draft,published'],
             'tags' => ['sometimes', 'array'],
-            'tags.*' => ['integer', 'exists:tags,id'],
+            'tags.*' => ['string', 'min:1', 'max:255'],
         ];
     }
 }
