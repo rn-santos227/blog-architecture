@@ -21,8 +21,9 @@ class PostRepository {
     public function create(array $data, int $userId): Post {
         $connection = $this->shardRouter->connectionForUser($userId);
         $indexName = $this->shardRouter->indexForUser($userId);
+        $shard = $this->shardRouter->shardForUser($userId);
 
-        return DB::connection($connection)->transaction(function () use ($data, $userId, $indexName) {
+        return DB::connection($connection)->transaction(function () use ($data, $userId, $indexName, $shard) {
             $post = Post::on(DB::getDefaultConnection())->create([
                 'user_id' => $userId,
                 'title' => $data['title'],
