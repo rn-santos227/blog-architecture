@@ -35,10 +35,14 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (!to.meta.requiresAuth) return true
-
   const authStore = useAuthStore()
   authStore.loadFromStorage()
+
+  if (to.name === 'register' && authStore.isAuthenticated) {
+    return { name: 'post-mine' }
+  }
+
+  if (!to.meta.requiresAuth) return true
 
   if (!authStore.isAuthenticated) {
     return { name: 'home' }

@@ -42,6 +42,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import UiModal from '@/components/ui/UiModal.vue'
 import UiTextField from '@/components/ui/UiTextField.vue'
 import UiButton from '@/components/ui/UiButton.vue'
@@ -52,6 +53,7 @@ import { useModal } from '@/providers/modal'
 
 const authStore = useAuthStore()
 const { isOpen, close } = useModal()
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
@@ -115,6 +117,7 @@ const handleSubmit = async () => {
     }
     setTimeout(() => {
       handleClose()
+      router.push('/posts/mine')
     }, 800)
   } else {
     dialogState.value = {
