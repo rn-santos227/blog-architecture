@@ -13,17 +13,21 @@
         </div>
       </div>
 
-      <UiButton variant="secondary" @click="$emit('login')">
-        Login
-      </UiButton>
+      <div class="flex items-center gap-3">
+        <UiButton variant="ghost" @click="router.push('/register')">
+          Register
+        </UiButton>
+        <UiButton variant="secondary">
+          Login
+        </UiButton>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
 import UiButton from './ui/UiButton.vue';
+import { useRouter } from 'vue-router';
 
-defineEmits<{
-  (event: 'login'): void;
-}>();
+const router = useRouter();
 </script>
