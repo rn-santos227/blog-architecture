@@ -125,6 +125,18 @@ class PostRepository {
             ->paginate($perPage);
     }
 
+    public function cursorPaginateByUser(int $userId, int $perPage = 10, ?string $cursor = null) {
+        $connection = $this->shardRouter->connectionForUser($userId);
+        return Post::on($connection)
+            ->where('user_id', $userId)
+            ->with(['user:id,name', 'tags:id,name,slug'])
+            ->orderByDesc('id')
+            ->cursorPaginate(
+                perPage: $perPage,
+                cursor: $cursor
+            );
+    }
+
     public function findById(int $id): ?Post {
         $connection = $this->shardRouter->connectionForPostId($id);
         if (!$connection) {

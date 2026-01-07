@@ -17,7 +17,7 @@ class PostController extends Controller
         private readonly PostRepository $posts
     ) {}
 
-public function index(Request $request): JsonResponse {
+    public function index(Request $request): JsonResponse {
         $posts = Post::query()
             ->where('status', 'published')
             ->with(['user:id,name', 'tags:id,name,slug'])
@@ -26,6 +26,16 @@ public function index(Request $request): JsonResponse {
                 perPage: 10,
                 cursor: $request->input('cursor')
             );
+
+        return response()->json($posts);
+    }
+
+    public function mine(Request $request): JsonResponse {
+        $posts = $this->posts->cursorPaginateByUser(
+            userId: $request->user()->id,
+            perPage: 10,
+            cursor: $request->input('cursor')
+        );
 
         return response()->json($posts);
     }
