@@ -21,6 +21,9 @@
       :rows="posts"
       row-key="id"
       empty-message="You have not created any posts yet."
+      :pagination="paginationState"
+      @next="handleNext"
+      @prev="handlePrev"
     >
       <template #cell-title="{ row }">
         <div class="font-semibold text-slate-900">{{ row.title }}</div>
@@ -57,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import UiChip from '@/components/ui/UiChip.vue'
 import UiDataTable from '@/components/ui/UiDataTable.vue'
@@ -67,6 +70,8 @@ import type { CursorPagination, Post } from '@/@types/blog'
 const posts = ref<Post[]>([])
 const isLoading = ref(false)
 const errorMessage = ref('')
+const nextCursor = ref<string | null>(null)
+const prevCursor = ref<string | null>(null)
 
 const columns = [
   { key: 'title', label: 'Title' },
@@ -99,20 +104,46 @@ const statusClass = (status?: string) => {
   return 'bg-amber-100 text-amber-700'
 }
 
-const fetchMyPosts = async () => {
+const fetchMyPosts = async (cursor: string | null = null) => {
   isLoading.value = true
   errorMessage.value = ''
 
   try {
-    const response = await api.get<CursorPagination<Post>>('/posts/mine')
+    const response = await api.get<CursorPagination<Post>>('/posts/mine', {
+      params: cursor ? { cursor } : undefined,
+    })
     posts.value = response.data.data ?? []
+    nextCursor.value = response.data.next_cursor ?? null
+    prevCursor.value = response.data.prev_cursor ?? null
   } catch (error) {
     console.error(error)
     errorMessage.value = 'Unable to load your posts right now. Please try again later.'
+    nextCursor.value = null
+    prevCursor.value = null
   } finally {
     isLoading.value = false
   }
 }
+
+const handleNext = () => {
+  if (nextCursor.value) {
+    fetchMyPosts(nextCursor.value)
+  }
+}
+
+const handlePrev = () => {
+  if (prevCursor.value) {
+    fetchMyPosts(prevCursor.value)
+  }
+}
+
+const paginationState = computed(() => ({
+  hasNext: Boolean(nextCursor.value),
+  hasPrev: Boolean(prevCursor.value),
+  isLoading: isLoading.value,
+  nextLabel: 'Next',
+  prevLabel: 'Previous',
+}))
 
 onMounted(fetchMyPosts)
 </script>
