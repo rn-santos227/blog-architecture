@@ -15,8 +15,9 @@ class TagController extends Controller
 
     public function index(IndexTagRequest $request): JsonResponse {
         $limit = (int) $request->input('limit', 50);
+        $query = $request->input('q');
 
-        $tags = $this->tags->listWithPostCounts($limit);
+        $tags = $this->tags->listWithPostCounts($limit, $query);
 
         return response()->json($tags);
     }

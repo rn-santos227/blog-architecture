@@ -23,6 +23,7 @@ class IndexTagRequest extends FormRequest
     {
         return [
             'limit' => ['nullable', 'integer', 'min:1', 'max:200'],
+            'q' => ['nullable', 'string', 'min:1'],
         ];
     }
 
@@ -30,6 +31,7 @@ class IndexTagRequest extends FormRequest
     {
         $this->merge([
             'limit' => $this->input('limit', 50),
+            'q' => $this->input('q'),
         ]);
     }
 }

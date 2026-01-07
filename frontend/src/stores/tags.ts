@@ -15,7 +15,7 @@ export const useTagsStore = defineStore('tags', {
     errorMessage: '',
   }),
   actions: {
-    async fetchTags(limit = 50) {
+    async fetchTags(query = '', limit = 50) {
       if (this.isLoading) return;
       this.isLoading = true;
       this.errorMessage = '';
@@ -24,6 +24,7 @@ export const useTagsStore = defineStore('tags', {
         const response = await api.get<Tag[]>('/tags', {
           params: {
             limit,
+            q: query || undefined,
           },
         });
         this.tags = response.data ?? [];

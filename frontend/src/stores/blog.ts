@@ -12,6 +12,17 @@ interface BlogState {
   nextCursor: string | null;
   isLoadingMore: boolean;
   hasMore: boolean;
+  isSearchMode: boolean;
+  hasSearched: boolean;
+  searchPage: number;
+  searchLimit: number;
+  searchParams: {
+    q?: string;
+    tags?: string[];
+    author_id?: number;
+    from?: string;
+    to?: string;
+  };
 }
 
 export const useBlogStore = defineStore('blog', {
@@ -25,6 +36,11 @@ export const useBlogStore = defineStore('blog', {
     nextCursor: null,
     isLoadingMore: false,
     hasMore: true,
+    isSearchMode: false,
+    hasSearched: false,
+    searchPage: 1,
+    searchLimit: 10,
+    searchParams: {},
   }),
   actions: {
     async fetchPosts() {
@@ -32,6 +48,8 @@ export const useBlogStore = defineStore('blog', {
       this.errorMessage = '';
       this.nextCursor = null;
       this.hasMore = true;
+      this.isSearchMode = false;
+      this.hasSearched = false;
 
       try {
         const response = await api.get<CursorPagination<Post>>('/posts');
@@ -46,8 +64,88 @@ export const useBlogStore = defineStore('blog', {
         this.isLoading = false;
       }
     },
+
+    async searchPosts(params: {
+      q?: string;
+      tags?: string[];
+      author_id?: number;
+      from?: string;
+      to?: string;
+      limit?: number;
+    }) {
+      this.isLoading = true;
+      this.errorMessage = '';
+      this.isSearchMode = true;
+      this.hasSearched = true;
+      this.searchPage = 1;
+      this.searchLimit = params.limit ?? 10;
+      this.searchParams = {
+        q: params.q,
+        tags: params.tags,
+        author_id: params.author_id,
+        from: params.from,
+        to: params.to,
+      };
+      this.isLoadingMore = false;
+      this.hasMore = true;
+
+      try {
+        const response = await api.get<Post[]>('/posts/search', {
+          params: {
+            ...this.searchParams,
+            page: this.searchPage,
+            limit: this.searchLimit,
+          },
+        });
+        const posts = response.data ?? [];
+        this.posts = posts;
+        this.hasMore = posts.length >= this.searchLimit;
+      } catch (error) {
+        console.error(error);
+        this.errorMessage = 'Unable to search posts right now. Please try again later.';
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async fetchMoreSearchPosts() {
+      if (!this.isSearchMode || !this.hasMore || this.isLoadingMore) return;
+
+      this.isLoadingMore = true;
+      this.errorMessage = '';
+
+      try {
+        const nextPage = this.searchPage + 1;
+        const response = await api.get<Post[]>('/posts/search', {
+          params: {
+            ...this.searchParams,
+            page: nextPage,
+            limit: this.searchLimit,
+          },
+        });
+        const posts = response.data ?? [];
+        this.posts = [...this.posts, ...posts];
+        this.searchPage = nextPage;
+        this.hasMore = posts.length >= this.searchLimit;
+      } catch (error) {
+        console.error(error);
+        this.errorMessage = 'Unable to load more search results right now. Please try again later.';
+      } finally {
+        this.isLoadingMore = false;
+      }
+    },
+    async resetSearch() {
+      this.isSearchMode = false;
+      this.hasSearched = false;
+      this.searchPage = 1;
+      this.searchLimit = 10;
+      this.searchParams = {};
+      this.posts = [];
+      this.hasMore = true;
+      await this.fetchPosts();
+    },
+
     async fetchMorePosts() {
-      if (!this.hasMore || this.isLoadingMore) return;
+      if (this.isSearchMode || !this.hasMore || this.isLoadingMore) return;
 
       this.isLoadingMore = true;
       this.errorMessage = '';
