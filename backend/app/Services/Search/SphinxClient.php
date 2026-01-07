@@ -24,9 +24,10 @@ class SphinxClient {
         ?int $fromTs = null,
         ?int $toTs = null
     ): array {
-        $sphinx = SphinxQL::create($this->connection)
+        $sphinx = new SphinxQL($this->connection);
+        $sphinx
             ->select('id')
-            ->from('posts_idx_shard_0, posts_idx_shard_1')
+            ->from('posts_idx')
             ->where('is_published', '=', 1)
             ->match(['title', 'body'], $query)
             ->limit($limit, $offset);
@@ -43,9 +44,12 @@ class SphinxClient {
             $sphinx->where('published_at_ts', '<=', $toTs);
         }
 
+        $result = $sphinx->execute();
+        $rows = is_array($result) ? $result : iterator_to_array($result);
+
         return array_map(
             fn ($row) => (int) $row['id'],
-            $sphinx->execute()
+            $rows
         );
     }
 }

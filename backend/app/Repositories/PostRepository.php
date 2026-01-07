@@ -158,6 +158,7 @@ class PostRepository {
         ?string $from = null,
         ?string $to = null
     ): Collection {
+        $cacheStore = Cache::store('redis');
         $limit = max(1, min($limit, 50));
         $page = max(1, $page);
         $offset = ($page - 1) * $limit;
@@ -168,7 +169,7 @@ class PostRepository {
             ->values()
             ->all();
 
-        $version = Cache::get('posts:search:version', 1);
+        $version = $cacheStore->get('posts:search:version', 1);
 
         $cacheKey = sprintf(
             'posts:search:v%d:%s:%d:%d:%s:%s:%s:%s',
@@ -182,7 +183,7 @@ class PostRepository {
             $to ?? 'any'
         );
 
-        return Cache::remember($cacheKey, now()->addMinutes(5), function () use (
+        $results = $cacheStore->remember($cacheKey, now()->addMinutes(5), function () use (
             $query,
             $limit,
             $offset,
@@ -232,7 +233,7 @@ class PostRepository {
             );
 
             if (empty($ids)) {
-                return collect();
+                return new Collection();
             }
 
             $posts = Post::query()
@@ -250,6 +251,10 @@ class PostRepository {
                 ->orderByRaw('FIELD(id, ' . implode(',', $ids) . ')')
                 ->get();
         });
+
+        return $results instanceof Collection
+            ? $results
+            : new Collection(is_array($results) ? $results : $results->all());
     }
 
     public function searchByUser(int $userId, string $query, int $limit = 10): Collection {
@@ -257,23 +262,43 @@ class PostRepository {
         $limit = max(1, min($limit, 50));
         $query = trim($query);
 
-        return Post::on($connection)
-            ->where('user_id', $userId)
-            ->when($query !== '', function ($builder) use ($query) {
-                $builder->where(function ($queryBuilder) use ($query) {
-                    $queryBuilder
-                        ->where('title', 'like', '%' . $query . '%')
-                        ->orWhere('body', 'like', '%' . $query . '%');
-                });
-            })
-            ->with(['user:id,name', 'tags:id,name,slug'])
-            ->orderByDesc('id')
-            ->limit($limit)
-            ->get();
+        $version = $cacheStore->get('posts:search:version', 1);
+        $cacheKey = sprintf(
+            'posts:search:user:v%d:%d:%s:%d',
+            $version,
+            $userId,
+            md5(mb_strtolower($query)),
+            $limit
+        );
+
+        $results = $cacheStore->remember($cacheKey, now()->addMinutes(5), function () use (
+            $connection,
+            $userId,
+            $query,
+            $limit
+        ) {
+            return Post::on($connection)
+                ->where('user_id', $userId)
+                ->when($query !== '', function ($builder) use ($query) {
+                    $builder->where(function ($queryBuilder) use ($query) {
+                        $queryBuilder
+                            ->where('title', 'like', '%' . $query . '%')
+                            ->orWhere('body', 'like', '%' . $query . '%');
+                    });
+                })
+                ->with(['user:id,name', 'tags:id,name,slug'])
+                ->orderByDesc('id')
+                ->limit($limit)
+                ->get();
+        });
+
+        return $results instanceof Collection
+            ? $results
+            : new Collection(is_array($results) ? $results : $results->all());
     }
 
     private function invalidateSearchCache(): void {
-        Cache::increment('posts:search:version');
+        Cache::store('redis')->increment('posts:search:version');
     }
 
     private function resolveTagIds(array $tags): array {
