@@ -26,7 +26,7 @@ class Post extends Model
     }
 
     public function user(): BelongsTo {
-        return $this->belongsTo(user::class);
+        return $this->belongsTo(User::class);
     }
 
     public function tags(): BelongsToMany {

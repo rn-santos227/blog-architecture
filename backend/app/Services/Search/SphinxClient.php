@@ -2,7 +2,7 @@
 
 namespace App\Services\Search;
 
-use Foolz\SphinxQL\Connection;
+use Foolz\SphinxQL\Drivers\Mysqli\Connection;
 use Foolz\SphinxQL\SphinxQL;
 
 class SphinxClient {

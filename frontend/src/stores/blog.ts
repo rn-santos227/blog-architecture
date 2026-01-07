@@ -34,7 +34,7 @@ export const useBlogStore = defineStore('blog', {
       this.hasMore = true;
 
       try {
-        const response = await api.get<CursorPagination<Post>>('/v1/posts');
+        const response = await api.get<CursorPagination<Post>>('/posts');
         const posts = response.data.data ?? [];
         this.posts = posts.filter((post) => !post.status || post.status === 'published');
         this.nextCursor = response.data.next_cursor ?? null;
@@ -53,7 +53,7 @@ export const useBlogStore = defineStore('blog', {
       this.errorMessage = '';
 
       try {
-        const response = await api.get<CursorPagination<Post>>('/v1/posts', {
+        const response = await api.get<CursorPagination<Post>>('/posts', {
           params: {
             cursor: this.nextCursor,
           },
@@ -76,7 +76,7 @@ export const useBlogStore = defineStore('blog', {
       this.detailErrorMessage = '';
 
       try {
-        const response = await api.get<Post>(`/v1/posts/${id}`);
+        const response = await api.get<Post>(`/posts/${id}`);
         this.selectedPost = response.data;
       } catch (error) {
         console.error(error);
