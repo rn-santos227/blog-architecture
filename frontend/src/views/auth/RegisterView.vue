@@ -67,7 +67,7 @@ import UiButton from '@/components/ui/UiButton.vue'
 import UiCard from '@/components/ui/UiCard.vue'
 import UiTextField from '@/components/ui/UiTextField.vue'
 import { useAuthStore } from '@/stores/auth'
-import { registerSchema } from '@/validations/auth.schema'
+import { registerSchema } from '@/schemas/auth'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -96,13 +96,28 @@ const handleSubmit = async () => {
   })
 
   if (!result.success) {
-    const flattened = result.error.flatten().fieldErrors
-    fieldErrors.value = {
-      name: flattened.name?.[0],
-      email: flattened.email?.[0],
-      password: flattened.password?.[0],
-      confirmPassword: flattened.confirmPassword?.[0],
+    const nextErrors: {
+      name?: string
+      email?: string
+      password?: string
+      confirmPassword?: string
+    } = {}
+    for (const issue of result.error.issues) {
+      const field = issue.path[0]
+      if (field === 'name' && !nextErrors.name) {
+        nextErrors.name = issue.message
+      }
+      if (field === 'email' && !nextErrors.email) {
+        nextErrors.email = issue.message
+      }
+      if (field === 'password' && !nextErrors.password) {
+        nextErrors.password = issue.message
+      }
+      if (field === 'confirmPassword' && !nextErrors.confirmPassword) {
+        nextErrors.confirmPassword = issue.message
+      }
     }
+    fieldErrors.value = nextErrors
     validationError.value = result.error.issues[0]?.message ?? 'Please check your input.'
     return
   }

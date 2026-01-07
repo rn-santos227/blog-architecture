@@ -47,7 +47,7 @@ import UiTextField from '@/components/ui/UiTextField.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiDialog from '@/components/ui/UiDialog.vue'
 import { useAuthStore } from '@/stores/auth'
-import { loginSchema } from '@/validations/auth.schema'
+import { loginSchema } from '@/schemas/auth'
 import { useModal } from '@/providers/modal'
 
 const authStore = useAuthStore()
