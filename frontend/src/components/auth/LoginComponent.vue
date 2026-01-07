@@ -1,7 +1,7 @@
 <template>
   <UiModal
     :is-open="isOpenValue"
-    title="Welcome back"
+    title="Login Account"
     description="Sign in to manage your blog content."
     @close="handleClose"
   >

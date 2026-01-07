@@ -12,22 +12,12 @@
           <p class="text-sm text-slate-500">Build modular publishing experiences</p>
         </div>
       </RouterLink>
-
-      <div class="flex items-center gap-3">
-        <UiButton variant="ghost" @click="router.push('/register')">
-          Register
-        </UiButton>
-        <UiButton variant="secondary">
-          Login
-        </UiButton>
-      </div>
+      <AuthActions />
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import UiButton from './ui/UiButton.vue';
-import { RouterLink, useRouter } from 'vue-router';
-
-const router = useRouter();
+import { RouterLink } from 'vue-router'
+import AuthActions from './auth/AuthActions.vue'
 </script>
