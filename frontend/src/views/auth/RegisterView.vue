@@ -9,53 +9,54 @@
     </section>
 
     <section class="w-full max-w-xl">
-      <UiCard>
-        <template #title>Registration Details</template>
-        <form class="space-y-5" @submit.prevent="handleSubmit">
-          <UiTextField
-            v-model="name"
-            label="Full name"
-            placeholder="Alex Writer"
-            :error-message="fieldErrors.name"
-          />
-          <UiTextField
-            v-model="email"
-            type="email"
-            label="Email address"
-            placeholder="you@example.com"
-            :error-message="fieldErrors.email"
-          />
-          <UiTextField
-            v-model="password"
-            type="password"
-            label="Password"
-            placeholder="Minimum 8 characters"
-            revealable
-            :error-message="fieldErrors.password"
-          />
-          <UiTextField
-            v-model="confirmPassword"
-            type="password"
-            label="Confirm password"
-            placeholder="Re-enter your password"
-            revealable
-            :error-message="fieldErrors.confirmPassword"
-          />
-
-          <div
-            v-if="validationError || errorMessage"
-            class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700"
-          >
-            {{ validationError || errorMessage }}
+      <form @submit.prevent="handleSubmit">
+        <UiCard>
+          <template #title>Registration Details</template>
+          <div class="space-y-5">
+            <UiTextField
+              v-model="name"
+              label="Full name"
+              placeholder="Alex Writer"
+              :error-message="fieldErrors.name"
+            />
+            <UiTextField
+              v-model="email"
+              type="email"
+              label="Email address"
+              placeholder="you@example.com"
+              :error-message="fieldErrors.email"
+            />
+            <UiTextField
+              v-model="password"
+              type="password"
+              label="Password"
+              placeholder="Minimum 8 characters"
+              revealable
+              :error-message="fieldErrors.password"
+            />
+            <UiTextField
+              v-model="confirmPassword"
+              type="password"
+              label="Confirm password"
+              placeholder="Re-enter your password"
+              revealable
+              :error-message="fieldErrors.confirmPassword"
+            />
+            <div
+              v-if="validationError || errorMessage"
+              class="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700"
+            >
+              {{ validationError || errorMessage }}
+            </div>
           </div>
-        </form>
-        <template #footer>
-          <UiButton class="w-full" type="submit" :disabled="isLoading">
-            <span v-if="isLoading">Creating Account...</span>
-            <span v-else>Create Account</span>
-          </UiButton>
-        </template>
-      </UiCard>
+          <template #footer>
+            <UiButton class="w-full" type="submit" :disabled="isLoading">
+              <span v-if="isLoading">Creating Account...</span>
+              <span v-else>Create Account</span>
+            </UiButton>
+          </template>
+        </UiCard>
+      </form>
     </section>
   </main>
 </template>

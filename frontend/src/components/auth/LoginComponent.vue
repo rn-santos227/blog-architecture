@@ -69,6 +69,7 @@ const isOpenValue = computed(() => isOpen?.value ?? false)
 const resetForm = () => {
   email.value = ''
   password.value = ''
+  fieldErrors.value = {}
   dialogState.value = null
 }
 
@@ -84,6 +85,11 @@ const handleSubmit = async () => {
   })
 
   if (!result.success) {
+    const flattened = result.error.flatten().fieldErrors
+    fieldErrors.value = {
+      email: flattened.email?.[0],
+      password: flattened.password?.[0],
+    }
     dialogState.value = {
       variant: 'warning',
       title: 'Check your details',
@@ -92,6 +98,7 @@ const handleSubmit = async () => {
     return
   }
 
+  fieldErrors.value = {}
   dialogState.value = {
     variant: 'info',
     title: 'Signing you in',
