@@ -9,6 +9,9 @@ interface BlogState {
   selectedPost: Post | null;
   isDetailLoading: boolean;
   detailErrorMessage: string;
+  nextCursor: string | null;
+  isLoadingMore: boolean;
+  hasMore: boolean;
 }
 
 export const useBlogStore = defineStore('blog', {
@@ -19,21 +22,52 @@ export const useBlogStore = defineStore('blog', {
     selectedPost: null,
     isDetailLoading: false,
     detailErrorMessage: '',
+    nextCursor: null,
+    isLoadingMore: false,
+    hasMore: true,
   }),
   actions: {
     async fetchPosts() {
       this.isLoading = true;
       this.errorMessage = '';
+      this.nextCursor = null;
+      this.hasMore = true;
 
       try {
         const response = await api.get<CursorPagination<Post>>('/v1/posts');
         const posts = response.data.data ?? [];
         this.posts = posts.filter((post) => !post.status || post.status === 'published');
+        this.nextCursor = response.data.next_cursor ?? null;
+        this.hasMore = Boolean(this.nextCursor);
       } catch (error) {
         console.error(error);
         this.errorMessage = 'Unable to load posts right now. Please try again later.';
       } finally {
         this.isLoading = false;
+      }
+    },
+    async fetchMorePosts() {
+      if (!this.hasMore || this.isLoadingMore) return;
+
+      this.isLoadingMore = true;
+      this.errorMessage = '';
+
+      try {
+        const response = await api.get<CursorPagination<Post>>('/v1/posts', {
+          params: {
+            cursor: this.nextCursor,
+          },
+        });
+        const posts = response.data.data ?? [];
+        const publishedPosts = posts.filter((post) => !post.status || post.status === 'published');
+        this.posts = [...this.posts, ...publishedPosts];
+        this.nextCursor = response.data.next_cursor ?? null;
+        this.hasMore = Boolean(this.nextCursor);
+      } catch (error) {
+        console.error(error);
+        this.errorMessage = 'Unable to load more posts right now. Please try again later.';
+      } finally {
+        this.isLoadingMore = false;
       }
     },
     async fetchPost(id: string | number) {
