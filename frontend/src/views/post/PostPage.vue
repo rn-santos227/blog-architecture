@@ -1,15 +1,23 @@
 <template>
   <main class="mx-auto w-full max-w-6xl px-6 py-10">
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div class="space-y-3">
+      <div>
         <div>
           <h1 class="text-3xl font-semibold text-slate-900">My Posts</h1>
           <p class="mt-2 text-sm text-slate-500">
             Review the posts you have created and track their publishing status.
           </p>
         </div>
-        <UiButton @click="openCreateModal">Create Post</UiButton>
       </div>
+      <UiButton @click="openCreateModal">Create Post</UiButton>
+    </div>
+
+    <div class="mb-6">
+      <PostSearchComponent
+        :is-loading="isLoading"
+        @search="handleSearch"
+        @clear="clearSearch"
+      />
     </div>
 
     <div
@@ -32,7 +40,7 @@
       :columns="columns"
       :rows="posts"
       row-key="id"
-      empty-message="You have not created any posts yet."
+      :empty-message="emptyMessage"
       :pagination="paginationState"
       @next="handleNext"
       @prev="handlePrev"
@@ -118,6 +126,7 @@ import UiDataTable from '@/components/ui/UiDataTable.vue'
 import UiButton from '@/components/ui/UiButton.vue'
 import UiSpinner from '@/components/ui/UiSpinner.vue'
 import PostCreateComponent from '@/components/post/PostCreateComponent.vue'
+import PostSearchComponent from '@/components/post/PostSearchComponent.vue'
 import PostUpdateComponent from '@/components/post/PostUpdateComponent.vue'
 import PostDeleteModal from '@/components/post/PostDeleteComponent.vue'
 import api from '@/services/api'
@@ -126,6 +135,8 @@ import type { CursorPagination, Post, Tag } from '@/@types/blog'
 const posts = ref<Post[]>([])
 const isLoading = ref<boolean>(false)
 const errorMessage = ref<string>('')
+const isSearching = ref<boolean>(false)
+const hasSearched = ref<boolean>(false)
 
 const nextCursor = ref<string | null>(null)
 const prevCursor = ref<string | null>(null)
@@ -179,6 +190,8 @@ const statusClass = (status?: string): string => {
 const fetchMyPosts = async (cursor: string | null = null): Promise<void> => {
   isLoading.value = true
   errorMessage.value = ''
+  isSearching.value = false
+  hasSearched.value = false
 
   try {
     const response = await api.get<CursorPagination<Post>>('/posts/mine', {
@@ -194,6 +207,32 @@ const fetchMyPosts = async (cursor: string | null = null): Promise<void> => {
       'Unable to load your posts right now. Please try again later.'
     nextCursor.value = null
     prevCursor.value = null
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const searchMyPosts = async (query: string): Promise<void> => {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const response = await api.get<Post[]>('/posts/mine/search', {
+      params: {
+        q: query,
+        limit: 25,
+      },
+    })
+
+    posts.value = response.data ?? []
+    nextCursor.value = null
+    prevCursor.value = null
+    isSearching.value = true
+    hasSearched.value = true
+  } catch (err) {
+    console.error(err)
+    errorMessage.value =
+      'Unable to search your posts right now. Please try again later.'
   } finally {
     isLoading.value = false
   }
@@ -218,20 +257,41 @@ const fetchTags = async (query = ''): Promise<void> => {
 }
 
 const handleNext = (): void => {
+  if (isSearching.value) return
   if (nextCursor.value) fetchMyPosts(nextCursor.value)
 }
 
 const handlePrev = (): void => {
+  if (isSearching.value) return
   if (prevCursor.value) fetchMyPosts(prevCursor.value)
 }
 
-const paginationState = computed(() => ({
-  hasNext: Boolean(nextCursor.value),
-  hasPrev: Boolean(prevCursor.value),
-  isLoading: isLoading.value,
-  nextLabel: 'Next',
-  prevLabel: 'Previous',
-}))
+const paginationState = computed(() =>
+  isSearching.value
+    ? null
+    : {
+        hasNext: Boolean(nextCursor.value),
+        hasPrev: Boolean(prevCursor.value),
+        isLoading: isLoading.value,
+        nextLabel: 'Next',
+        prevLabel: 'Previous',
+      },
+)
+
+const emptyMessage = computed(() =>
+  isSearching.value || hasSearched.value
+    ? 'No posts matched your search.'
+    : 'You have not created any posts yet.',
+)
+
+const handleSearch = (query: string): void => {
+  searchMyPosts(query)
+}
+
+const clearSearch = (): void => {
+  if (!hasSearched.value && !isSearching.value) return
+  fetchMyPosts()
+}
 
 const openCreateModal = (): void => {
   isCreateModalOpen.value = true
