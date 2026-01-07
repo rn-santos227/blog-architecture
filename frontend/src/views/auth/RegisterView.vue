@@ -12,14 +12,26 @@
       <UiCard>
         <template #title>Registration Details</template>
         <form class="space-y-5" @submit.prevent="handleSubmit">
-          <UiTextField v-model="name" label="Full name" placeholder="Alex Writer" />
-          <UiTextField v-model="email" type="email" label="Email address" placeholder="you@example.com" />
+          <UiTextField
+            v-model="name"
+            label="Full name"
+            placeholder="Alex Writer"
+            :error-message="fieldErrors.name"
+          />
+          <UiTextField
+            v-model="email"
+            type="email"
+            label="Email address"
+            placeholder="you@example.com"
+            :error-message="fieldErrors.email"
+          />
           <UiTextField
             v-model="password"
             type="password"
             label="Password"
             placeholder="Minimum 8 characters"
             revealable
+            :error-message="fieldErrors.password"
           />
           <UiTextField
             v-model="confirmPassword"
@@ -27,6 +39,7 @@
             label="Confirm password"
             placeholder="Re-enter your password"
             revealable
+            :error-message="fieldErrors.confirmPassword"
           />
 
           <div
@@ -67,6 +80,12 @@ const confirmPassword = ref('')
 const errorMessage = computed(() => authStore.errorMessage)
 const isLoading = computed(() => authStore.isLoading)
 const validationError = ref('')
+const fieldErrors = ref<{
+  name?: string
+  email?: string
+  password?: string
+  confirmPassword?: string
+}>({})
 
 const handleSubmit = async () => {
   const result = registerSchema.safeParse({
@@ -77,11 +96,19 @@ const handleSubmit = async () => {
   })
 
   if (!result.success) {
+    const flattened = result.error.flatten().fieldErrors
+    fieldErrors.value = {
+      name: flattened.name?.[0],
+      email: flattened.email?.[0],
+      password: flattened.password?.[0],
+      confirmPassword: flattened.confirmPassword?.[0],
+    }
     validationError.value = result.error.issues[0]?.message ?? 'Please check your input.'
     return
   }
 
   validationError.value = ''
+  fieldErrors.value = {}
   const success = await authStore.register(name.value, email.value, password.value)
   if (success) {
     router.push('/')

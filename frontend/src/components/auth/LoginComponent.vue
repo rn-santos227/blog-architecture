@@ -11,6 +11,7 @@
         type="email"
         label="Email address"
         placeholder="you@example.com"
+        :error-message="fieldErrors.email"
       />
       <UiTextField
         v-model="password"
@@ -18,6 +19,7 @@
         label="Password"
         placeholder="Enter your password"
         revealable
+        :error-message="fieldErrors.password"
       />
 
       <UiDialog
@@ -53,6 +55,7 @@ const { isOpen, close } = useModal()
 
 const email = ref('')
 const password = ref('')
+const fieldErrors = ref<{ email?: string; password?: string }>({})
 
 const dialogState = ref<null | {
   variant: 'success' | 'warning' | 'error' | 'info'

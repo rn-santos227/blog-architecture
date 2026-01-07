@@ -3,11 +3,17 @@
     <span v-if="label" class="font-medium">{{ label }}</span>
     <div class="relative">
       <input
-        class="w-full rounded-md border border-slate-300 px-3 py-2 text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+        :class="[
+          'w-full rounded-md border px-3 py-2 text-slate-900 shadow-sm transition focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400',
+          errorMessage
+            ? 'border-red-400 focus:border-red-500 focus:ring-red-200'
+            : 'border-slate-300 focus:border-blue-500 focus:ring-blue-200',
+        ]"
         :type="resolvedType"
         :placeholder="placeholder"
         :value="modelValue"
         :disabled="disabled"
+        :aria-invalid="Boolean(errorMessage)"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       />
       <button
@@ -19,6 +25,7 @@
         {{ isVisible ? 'Hide' : 'Show' }}
       </button>
     </div>
+    <p v-if="errorMessage" class="text-xs text-red-600">{{ errorMessage }}</p>
   </label>
 </template>
 
@@ -33,6 +40,7 @@ const props = withDefaults(
     type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url';
     disabled?: boolean;
     revealable?: boolean;
+    errorMessage?: string;
   }>(),
   {
     label: '',
@@ -40,6 +48,7 @@ const props = withDefaults(
     type: 'text',
     disabled: false,
     revealable: false,
+    errorMessage: '',
   },
 );
 
