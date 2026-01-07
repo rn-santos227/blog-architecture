@@ -62,7 +62,7 @@ import { RouterLink } from 'vue-router'
 import UiChip from '@/components/ui/UiChip.vue'
 import UiDataTable from '@/components/ui/UiDataTable.vue'
 import api from '@/services/api'
-import type { Post } from '@/@types/blog'
+import type { CursorPagination, Post } from '@/@types/blog'
 
 const posts = ref<Post[]>([])
 const isLoading = ref(false)
@@ -104,8 +104,8 @@ const fetchMyPosts = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await api.get<Post[]>('/posts/mine')
-    posts.value = response.data ?? []
+    const response = await api.get<CursorPagination<Post>>('/posts/mine')
+    posts.value = response.data.data ?? []
   } catch (error) {
     console.error(error)
     errorMessage.value = 'Unable to load your posts right now. Please try again later.'
