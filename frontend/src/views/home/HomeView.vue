@@ -2,7 +2,7 @@
   <main class="mx-auto w-full max-w-6xl px-6 py-10">
     <section class="space-y-3">
       <p class="text-sm font-semibold uppercase tracking-wide text-blue-600">Published Stories</p>
-      <h1 class="text-3xl font-semibold text-slate-900 sm:text-4xl">Latest blog previews</h1>
+      <h1 class="text-3xl font-semibold text-slate-900 sm:text-4xl">Latest Blog Previews</h1>
     </section>
 
     <section class="mt-8">

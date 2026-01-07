@@ -1,5 +1,7 @@
 <template>
-  <header class="border-b border-slate-200 bg-white">
+  <header
+    class="sticky top-0 z-50 border-b border-slate-200 bg-white"
+  >
     <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
       <div class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
@@ -10,7 +12,10 @@
           <p class="text-sm text-slate-500">Build modular publishing experiences</p>
         </div>
       </div>
-      <UiButton variant="secondary" @click="$emit('login')">Login</UiButton>
+
+      <UiButton variant="secondary" @click="$emit('login')">
+        Login
+      </UiButton>
     </div>
   </header>
 </template>

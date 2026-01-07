@@ -3,22 +3,32 @@
     <span v-if="label" class="font-medium">{{ label }}</span>
     <template v-if="multiple">
       <div class="space-y-2">
-        <input
-          v-model="inputValue"
-          :list="listId"
-          type="text"
-          class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-          :placeholder="placeholder"
-          :disabled="disabled"
-          @keydown="handleKeydown"
-          @input="handleInput"
-          @blur="commitInput"
-        />
-        <datalist :id="listId">
-          <option v-for="option in options" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </datalist>
+        <div class="relative">
+          <input
+            v-model="inputValue"
+            type="text"
+            class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+            :placeholder="placeholder"
+            :disabled="disabled"
+            @keydown="handleKeydown"
+            @input="handleInput"
+            @focus="openSuggestions"
+            @blur="closeSuggestions"
+          />
+          <ul
+            v-if="showSuggestions"
+            class="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-md border border-slate-200 bg-white text-sm shadow-lg"
+          >
+            <li
+              v-for="option in filteredOptions"
+              :key="option.value"
+              class="cursor-pointer px-3 py-2 text-slate-700 hover:bg-slate-100"
+              @mousedown.prevent="selectOption(option.value)"
+            >
+              {{ option.label }}
+            </li>
+          </ul>
+        </div>
         <div v-if="selectedValues.length" class="flex flex-wrap gap-2">
           <span
             v-for="value in selectedValues"
@@ -57,8 +67,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-const listId = `combo-${Math.random().toString(36).slice(2, 9)}`;
-
 const props = withDefaults(
   defineProps<{
     modelValue: string | string[];
@@ -84,6 +92,7 @@ const emit = defineEmits<{
 }>();
 
 const inputValue = ref('');
+const isOpen = ref(false);
 
 const selectedValues = computed(() => {
   if (Array.isArray(props.modelValue)) {
@@ -92,6 +101,21 @@ const selectedValues = computed(() => {
 
   return props.modelValue ? [props.modelValue] : [];
 });
+
+const filteredOptions = computed(() => {
+  const query = inputValue.value.trim().toLowerCase();
+  if (!query) {
+    return props.options.filter((option) => !selectedValues.value.includes(option.value));
+  }
+
+  return props.options.filter(
+    (option) =>
+      option.label.toLowerCase().includes(query) &&
+      !selectedValues.value.includes(option.value),
+  );
+});
+
+const showSuggestions = computed(() => isOpen.value && filteredOptions.value.length > 0);
 
 const labelForValue = (value: string) => {
   const match = props.options.find((option) => option.value === value);
@@ -130,6 +154,10 @@ const removeValue = (value: string) => {
   updateValues(selectedValues.value.filter((item) => item !== value));
 };
 
+const selectOption = (value: string) => {
+  addValue(value);
+};
+
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Enter' || event.key === ',') {
     event.preventDefault();
@@ -138,11 +166,18 @@ const handleKeydown = (event: KeyboardEvent) => {
 };
 
 const handleInput = () => {
+  isOpen.value = true;
   emit('search', inputValue.value);
 };
 
-const commitInput = () => {
-  addValue(inputValue.value);
+const openSuggestions = () => {
+  isOpen.value = true;
 };
 
+const closeSuggestions = () => {
+  window.setTimeout(() => {
+    isOpen.value = false;
+    addValue(inputValue.value);
+  }, 0);
+};
 </script>

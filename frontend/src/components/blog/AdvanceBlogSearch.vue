@@ -49,10 +49,10 @@
           />
         </label>
         <UiButton type="submit" :disabled="isLoading">
-          {{ isLoading ? 'Searching...' : 'Search posts' }}
+          {{ isLoading ? 'Searching...' : 'Search Posts' }}
         </UiButton>
         <UiButton variant="secondary" type="button" :disabled="isLoading" @click="resetFilters">
-          Reset filters
+          Reset Filters
         </UiButton>
       </div>
     </form>
