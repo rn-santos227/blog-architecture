@@ -16,7 +16,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/posts', [PostController::class, 'index']);
     Route::get('/posts/search', [PostController::class, 'search']);
-    Route::get('/posts/{post}', [PostController::class, 'show']);
+    Route::get('/posts/{post}', [PostController::class, 'show'])->whereNumber('post');
 
     Route::get('/tags', [TagController::class, 'index']);
 
@@ -25,7 +25,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/posts/mine', [PostController::class, 'mine']);
         Route::post('/posts', [PostController::class, 'store']);
-        Route::put('/posts/{post}', [PostController::class, 'update']);
-        Route::delete('/posts/{post}', [PostController::class, 'destroy']);
+        Route::put('/posts/{post}', [PostController::class, 'update'])->whereNumber('post');
+        Route::delete('/posts/{post}', [PostController::class, 'destroy'])->whereNumber('post');
     });
 });
