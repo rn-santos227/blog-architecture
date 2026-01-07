@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/home/HomeView.vue'
 import PostDetailView from '@/views/post/PostDetailView.vue'
+import PostPage from '@/views/post/PostPage.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -17,11 +19,32 @@ const router = createRouter({
       component: PostDetailView,
     },
     {
+      path: '/posts/mine',
+      name: 'post-mine',
+      component: PostPage,
+      meta: {
+        requiresAuth: true,
+      },
+    },
+    {
       path: '/register',
       name: 'register',
       component: RegisterView,
     },
   ],
+})
+
+router.beforeEach((to) => {
+  if (!to.meta.requiresAuth) return true
+
+  const authStore = useAuthStore()
+  authStore.loadFromStorage()
+
+  if (!authStore.isAuthenticated) {
+    return { name: 'home' }
+  }
+
+  return true
 })
 
 export default router

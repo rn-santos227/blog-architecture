@@ -127,7 +127,7 @@ const handleSubmit = async () => {
   fieldErrors.value = {}
   const success = await authStore.register(name.value, email.value, password.value)
   if (success) {
-    router.push('/')
+    router.push('/posts/mine')
   }
 }
 </script>
