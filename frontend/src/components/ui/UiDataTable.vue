@@ -6,7 +6,7 @@
           <tr>
             <th
               v-for="column in columns"
-              :key="column.key"
+              :key="String(column.key)"
               scope="col"
               class="px-4 py-3 font-semibold"
               :class="column.headerClassName"
@@ -16,26 +16,27 @@
           </tr>
         </thead>
         <tbody v-if="rows.length" class="divide-y divide-slate-100">
-          <tr v-for="row in rows" :key="row[rowKey]">
+          <tr v-for="row in rows" :key="String(row[rowKey])">
             <td
               v-for="column in columns"
-              :key="column.key"
+              :key="String(column.key)"
               class="px-4 py-3 text-slate-700"
               :class="column.className"
             >
               <slot
-                :name="`cell-${column.key}`"
+                :name="`cell-${String(column.key)}`"
                 :row="row"
-                :value="row[column.key]"
+                :value="getValue(row, column.key)"
                 :column="column"
               >
-                {{ row[column.key] ?? '—' }}
+                {{ getValue(row, column.key) ?? '—' }}
               </slot>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
     <div v-if="!rows.length" class="px-6 py-10 text-center text-sm text-slate-500">
       {{ emptyMessage }}
     </div>
@@ -65,17 +66,17 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends Record<string, unknown>">
 import UiButton from '@/components/ui/UiButton.vue'
 
-interface DataTableColumn {
-  key: string
+export interface DataTableColumn<T> {
+  key: keyof T | string
   label: string
   className?: string
   headerClassName?: string
 }
 
-interface DataTablePagination {
+export interface DataTablePagination {
   hasNext: boolean
   hasPrev: boolean
   isLoading?: boolean
@@ -85,14 +86,15 @@ interface DataTablePagination {
 
 withDefaults(
   defineProps<{
-    columns: DataTableColumn[]
-    rows: Record<string, any>[]
-    rowKey?: string
+    columns: DataTableColumn<T>[]
+    rows: T[]
+    rowKey: {
+      [K in keyof T]: T[K] extends string | number ? K : never
+    }[keyof T]
     emptyMessage?: string
     pagination?: DataTablePagination | null
   }>(),
   {
-    rowKey: 'id',
     emptyMessage: 'No records available.',
     pagination: null,
   },
@@ -102,4 +104,19 @@ defineEmits<{
   (event: 'next'): void
   (event: 'prev'): void
 }>()
+
+defineSlots<{
+  [key: `cell-${string}`]: (props: {
+    row: T
+    value: unknown
+    column: DataTableColumn<T>
+  }) => unknown
+}>()
+
+const getValue = (row: T, key: keyof T | string): unknown => {
+  if (typeof key === 'string') {
+    return (row as Record<string, unknown>)[key]
+  }
+  return row[key]
+}
 </script>
