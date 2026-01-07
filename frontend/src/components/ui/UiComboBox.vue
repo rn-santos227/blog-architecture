@@ -7,10 +7,11 @@
           v-model="inputValue"
           :list="listId"
           type="text"
-          class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+          class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
           :placeholder="placeholder"
           :disabled="disabled"
           @keydown="handleKeydown"
+          @input="handleInput"
           @blur="commitInput"
         />
         <datalist :id="listId">
@@ -38,7 +39,7 @@
     </template>
     <select
       v-else
-      class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+      class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
       :value="modelValue"
       :disabled="disabled"
       @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
@@ -79,6 +80,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (event: 'update:modelValue', value: string | string[]): void;
+  (event: 'search', value: string): void;
 }>();
 
 const inputValue = ref('');
@@ -133,6 +135,10 @@ const handleKeydown = (event: KeyboardEvent) => {
     event.preventDefault();
     addValue(inputValue.value.replace(',', ''));
   }
+};
+
+const handleInput = () => {
+  emit('search', inputValue.value);
 };
 
 const commitInput = () => {

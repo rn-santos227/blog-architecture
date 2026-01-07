@@ -17,7 +17,8 @@
         {{ errorMessage }}
       </div>
       <div v-else-if="posts.length === 0" class="rounded-2xl border border-slate-200 p-6 text-slate-500">
-        No published posts yet. Check back soon!
+       <span v-if="isSearchMode && hasSearched">No posts matched your search. Try adjusting your filters.</span>
+        <span v-else>No published posts yet. Check back soon!</span>
       </div>
       <div v-else class="space-y-8">
         <div class="grid gap-6 md:grid-cols-2">
@@ -49,6 +50,8 @@ const isLoading = computed(() => blogStore.isLoading);
 const isLoadingMore = computed(() => blogStore.isLoadingMore);
 const errorMessage = computed(() => blogStore.errorMessage);
 const hasMore = computed(() => blogStore.hasMore);
+const isSearchMode = computed(() => blogStore.isSearchMode);
+const hasSearched = computed(() => blogStore.hasSearched);
 
 let observer: IntersectionObserver | null = null;
 
@@ -60,7 +63,11 @@ const setupObserver = () => {
     (entries) => {
       const firstEntry = entries[0];
       if (firstEntry?.isIntersecting) {
-        blogStore.fetchMorePosts();
+        if (blogStore.isSearchMode) {
+          blogStore.fetchMoreSearchPosts();
+        } else {
+          blogStore.fetchMorePosts();
+        }
       }
     },
     {

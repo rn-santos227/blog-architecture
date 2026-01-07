@@ -12,9 +12,11 @@
         {{ isOpen ? 'Hide' : 'Show' }}
       </span>
     </button>
-    <div v-show="isOpen" class="border-t border-slate-100 px-4 py-4">
-      <slot />
-    </div>
+    <transition name="accordion">
+      <div v-show="isOpen" class="accordion-content border-t border-slate-100 px-4 py-4">
+        <slot />
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -36,3 +38,26 @@ const toggle = () => {
   isOpen.value = !isOpen.value;
 };
 </script>
+
+<style scoped>
+.accordion-content {
+  overflow: hidden;
+}
+
+.accordion-enter-active,
+.accordion-leave-active {
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.accordion-enter-from,
+.accordion-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.accordion-enter-to,
+.accordion-leave-from {
+  max-height: 800px;
+  opacity: 1;
+}
+</style>
