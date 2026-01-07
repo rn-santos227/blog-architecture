@@ -252,6 +252,26 @@ class PostRepository {
         });
     }
 
+    public function searchByUser(int $userId, string $query, int $limit = 10): Collection {
+        $connection = $this->shardRouter->connectionForUser($userId);
+        $limit = max(1, min($limit, 50));
+        $query = trim($query);
+
+        return Post::on($connection)
+            ->where('user_id', $userId)
+            ->when($query !== '', function ($builder) use ($query) {
+                $builder->where(function ($queryBuilder) use ($query) {
+                    $queryBuilder
+                        ->where('title', 'like', '%' . $query . '%')
+                        ->orWhere('body', 'like', '%' . $query . '%');
+                });
+            })
+            ->with(['user:id,name', 'tags:id,name,slug'])
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+    }
+
     private function invalidateSearchCache(): void {
         Cache::increment('posts:search:version');
     }

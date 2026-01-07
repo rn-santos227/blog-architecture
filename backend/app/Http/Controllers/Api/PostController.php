@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Post\SearchMyPostRequest;
 use App\Http\Requests\Post\SearchPostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
@@ -49,6 +50,16 @@ class PostController extends Controller
             tags: $request->tags,
             from: $request->from,
             to: $request->to,
+        );
+
+        return response()->json($posts);
+    }
+
+    public function searchMine(SearchMyPostRequest $request): JsonResponse {
+        $posts = $this->posts->searchByUser(
+            userId: $request->user()->id,
+            query: $request->q,
+            limit: (int) $request->limit
         );
 
         return response()->json($posts);

@@ -24,6 +24,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/logout', [AuthController::class, 'logout']);
 
         Route::get('/posts/mine', [PostController::class, 'mine']);
+        Route::get('/posts/mine/search', [PostController::class, 'searchMine']);
         Route::post('/posts', [PostController::class, 'store']);
         Route::put('/posts/{post}', [PostController::class, 'update'])->whereNumber('post');
         Route::delete('/posts/{post}', [PostController::class, 'destroy'])->whereNumber('post');
