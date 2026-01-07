@@ -1,12 +1,12 @@
 <template>
   <main class="mx-auto w-full max-w-6xl px-6 py-10">
     <section class="space-y-3">
-      <p class="text-sm font-semibold uppercase tracking-wide text-blue-600">Published stories</p>
+      <p class="text-sm font-semibold uppercase tracking-wide text-blue-600">Published Stories</p>
       <h1 class="text-3xl font-semibold text-slate-900 sm:text-4xl">Latest blog previews</h1>
-      <p class="max-w-2xl text-base text-slate-600">
-        Discover the latest published insights from our writers. Click a post to dive into the full
-        story.
-      </p>
+    </section>
+
+    <section class="mt-8">
+      <AdvanceBlogSearch />
     </section>
 
     <section class="mt-8">
@@ -37,6 +37,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import AdvanceBlogSearch from '@/components/blog/AdvanceBlogSearch.vue';
 import BlogCard from '@/components/blog/BlogCard.vue';
 import { useBlogStore } from '@/stores/blog';
 
