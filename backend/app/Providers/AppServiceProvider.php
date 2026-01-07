@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Post;
+use App\Policies\PostPolicy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use App\Services\Search\SphinxClient;
 
@@ -22,5 +25,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Model::preventLazyLoading(!$this->app->isProduction());
+        Gate::policy(Post::class, PostPolicy::class);
     }
 }
